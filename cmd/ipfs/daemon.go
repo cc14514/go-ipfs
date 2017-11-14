@@ -25,7 +25,7 @@ import (
 	"gx/ipfs/QmX3U3YXCQ6UYBxq2LVWF8dARS1hPUTEYLrSx654Qyxyw6/go-multiaddr-net"
 	ma "gx/ipfs/QmXY77cVe7rVRQXZZQRioukUM7aRW3BTcAgJe12MCtb3Ji/go-multiaddr"
 	iconn "gx/ipfs/QmfQAY7YU4fQi3sjGLs1hwkM2Aq7dxgDyoMjaKN4WBWvcB/go-libp2p-interface-conn"
-	"github.com/cc14514/go-ipfs-helpservice"
+	"github.com/cc14514/go-ipfs/helpservice"
 	"debuglogger"
 	inat "gx/ipfs/QmeXm9iwA4cURNmexpuBucDWcV38jNHdqpGcb7yoyP6e4G/go-libp2p-nat"
 )

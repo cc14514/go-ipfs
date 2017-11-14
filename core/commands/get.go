@@ -19,7 +19,7 @@ import (
 	uarchive "github.com/cc14514/go-ipfs/unixfs/archive"
 	"time"
 	dlog "debuglogger"
-	"github.com/cc14514/go-ipfs-helpservice"
+	"github.com/cc14514/go-ipfs/helpservice"
 )
 
 var ErrInvalidCompressionLevel = errors.New("Compression level must be between 1 and 9")
