@@ -42,7 +42,7 @@ import (
 
 // log is the command logger
 var log = logging.Logger("cmd/ipfs")
-var DevFlag = "DEV:171109-1800"
+var DevFlag = "TEST:171115-1800"
 
 var errRequestCanceled = errors.New("request canceled")
 

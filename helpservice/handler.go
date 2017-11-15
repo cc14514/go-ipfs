@@ -22,8 +22,7 @@ func (p *HelpService) doHandler(msg string) error {
 	mtype, fileid := getFilePath(msg)
 	dlog.Println("👮 ========>", mtype, fileid)
 	switch mtype {
-	//TODO other msg type
-	default:
+	case "00":
 		go func() {
 			select {
 			case <-time.After(15 * time.Second):
@@ -48,6 +47,8 @@ func (p *HelpService) doHandler(msg string) error {
 		}
 		dlog.Println("help_cat_total_byte:", t, " ,", fileid)
 	}
+	//TODO other msg type
+
 	return nil
 }
 

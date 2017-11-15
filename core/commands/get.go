@@ -156,6 +156,8 @@ may also specify the level of compression by specifying '-l=<1-9>'.
 		TODO 此处的第二个问题是，Resolve 完成以后，依然会有读不到数据的情况，网络通为何数据不通？
 		*/
 		reader, err := uarchive.DagArchive(ctx, dn, p.String(), node.DAG, archive, cmplvl)
+		//cancelCh <- 0
+
 		if err != nil {
 			res.SetError(err, cmds.ErrNormal)
 			return

@@ -26,6 +26,7 @@ import (
 	blocks "gx/ipfs/QmSn9Td7xgxm9EV7iEjTckpUWmWApggzPxu7eFGWkkpwin/go-block-format"
 	logging "gx/ipfs/QmSpJByNKFX1sCsHBEp3R73FL4NF6FnQTEGyNAXHm2GS52/go-log"
 	peer "gx/ipfs/QmXYjuNuxVzXKJCfWasQk1RqkhVLDM9jtUKhqc2WPQmFSB/go-libp2p-peer"
+	"debuglogger"
 )
 
 var log = logging.Logger("bitswap")
@@ -233,17 +234,18 @@ func (bs *Bitswap) GetBlocks(ctx context.Context, keys []*cid.Cid) (<-chan block
 	// NB: Optimization. Assumes that providers of key[0] are likely to
 	// be able to provide for all keys. This currently holds true in most
 	// every situation. Later, this assumption may not hold as true.
+	debuglogger.Println(">>>> bs.wm.WantBlocks(ctx, keys, nil, mses)")
 	req := &blockRequest{
 		Cid: keys[0],
 		Ctx: ctx,
 	}
-
 	remaining := cid.NewSet()
 	for _, k := range keys {
 		remaining.Add(k)
 	}
 
 	out := make(chan blocks.Block)
+	debuglogger.Println(">>>> new :: req, remaining, out")
 	go func() {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
@@ -253,6 +255,7 @@ func (bs *Bitswap) GetBlocks(ctx context.Context, keys []*cid.Cid) (<-chan block
 			bs.CancelWants(remaining.Keys(), mses)
 		}()
 		for {
+			//TODO :: 阻塞在这里了，网络通但是这里没有结果
 			select {
 			case blk, ok := <-promise:
 				if !ok {
@@ -271,11 +274,14 @@ func (bs *Bitswap) GetBlocks(ctx context.Context, keys []*cid.Cid) (<-chan block
 			}
 		}
 	}()
+	debuglogger.Println(">>>> gorouter ")
 
 	select {
 	case bs.findKeys <- req:
+		debuglogger.Println(">>>> case bs.findKeys <- req")
 		return out, nil
 	case <-ctx.Done():
+		debuglogger.Println(">>>> case <-ctx.Done()")
 		return nil, ctx.Err()
 	}
 }

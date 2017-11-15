@@ -273,12 +273,66 @@ func GetNodes(ctx context.Context, ds DAGService, keys []*cid.Cid) []NodeGetter 
 	go func() {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
-
 		nodechan := ds.GetMany(ctx, dedupedKeys)
 
 		for count := 0; count < len(keys); {
+			//TODO 问题在 nodechan 这里，读不到返回值，所以一直阻塞，等待 pubsub 响应
+			// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+			// add by liangc
+			// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+			// 指定时间内，没有解除阻塞，这个地方要去请其他节点帮忙了，发一个广播
+			/*
+			cancelCh := make(chan int)
+			go func() {
+				select {
+				case <-cancelCh:
+					//撤销
+					debuglogger.Println("****** [merkledag] cancel_1 ******")
+				case <-time.After(5* time.Second):
+					//触发
+					debuglogger.Println("<<<<<< [merkledag] help_me_event >>>>>> ")
+					//hs := helpservice.GetHelpService()
+					//寻找帮忙的节点
+					//TODO 简单点，就找 peers 们帮忙吧,但是要尽量排除 种子节点
+					//TODO 相同网段的 peers 都应该排除在外，否则会造成不必要的阻塞
+					//peerids := hs.MyPeerIDs()
+					blk := keys[count]
+					debuglogger.Println("🃏 <><><><><><><>",blk.String())
+					helpMsg := "00" + blk.String()
+					myPeersCh := make(chan []peer.ID)
+					helpservicechannel.MyPeersCh <- helpservicechannel.NewMyPeers(myPeersCh)
+					peerids := <- myPeersCh
+					for i, pid := range peerids {
+						//o, e := hs.Send(ctx, pid, helpMsg)
+						helpRtnCh := make(chan helpservicechannel.HelpMsgRtn)
+						helpservicechannel.HelpCh <- helpservicechannel.NewHelpMsg(ctx,pid,helpMsg,helpRtnCh)
+						rtnM := <- helpRtnCh
+						e := rtnM.Error
+						o := rtnM.TtlCh
+						debuglogger.Println("()()()()()()> e=",e)
+						if e != nil {
+							debuglogger.Println("[merkledag] send_help_msg_err", i, pid, e)
+						} else {
+							select {
+							case t := <-o:
+								debuglogger.Println("[merkledag] send_help_msg_ok", i, pid, t)
+							case <-time.After(5 * time.Second):
+								debuglogger.Println("[merkledag] send_help_msg_timeout", i, pid)
+							case <-cancelCh:
+								//撤销
+								debuglogger.Println("****** [merkledag] cancel_2 ******")
+							}
+						}
+					}
+				}
+			}()
+			*/
+			// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+			// add by liangc
+			// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 			select {
 			case opt, ok := <-nodechan:
+				//cancelCh <- 0
 				if !ok {
 					for _, p := range promises {
 						p.Fail(ErrNotFound)
@@ -300,6 +354,7 @@ func GetNodes(ctx context.Context, ds DAGService, keys []*cid.Cid) []NodeGetter 
 					promises[i].Send(nd)
 				}
 			case <-ctx.Done():
+				//cancelCh <- 0
 				return
 			}
 		}
